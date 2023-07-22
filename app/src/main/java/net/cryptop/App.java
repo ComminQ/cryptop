@@ -64,7 +64,7 @@ public class App {
       }
       logger.info("Downloading data for " + pair + " ...");
       long nowMinusOneYear =
-          LocalDateTime.now().minusYears(1).toEpochSecond(ZoneOffset.UTC) *
+          LocalDateTime.now().minusYears(2).toEpochSecond(ZoneOffset.UTC) *
           1000;
       var historicalData =
           BinanceData

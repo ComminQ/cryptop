@@ -150,7 +150,8 @@ public class BinanceData {
 
           String url =
               "https://api.binance.com/api/v3/klines?symbol=" + pair.symbol() +
-              "&interval=" + interval.tag() + "&startTime=" + from +
+              "&limit=1000"
+              + "&interval=" + interval.tag() + "&startTime=" + from +
               "&endTime=" + to;
 
           var request =

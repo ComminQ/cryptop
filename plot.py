@@ -53,6 +53,9 @@ def plot(df: DataFrame):
 
   a2.axhline(y = 500, color = 'b', linestyle = '-')
   a2.axhline(y = -500, color = 'b', linestyle = '-')
+  # set the max y value to be 1000
+  a2.set_ylim([-1000, 1000])
+
   # plt.axhline(y = 0.5, color = 'r', linestyle = '-')
 
   a1.set_xlabel("Date")
