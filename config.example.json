@@ -1,0 +1,8 @@
+{
+	"$schema": "./config.schema.json",
+	"pairs": ["BTC_BUSD", "ETH_USDT"],
+  "mainCredentials": {
+    "apiKey": "XXXXX",
+    "secretKey": "sk_XXXX"
+  }
+}

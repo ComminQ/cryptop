@@ -1,0 +1,36 @@
+{
+	"$schema": "http://json-schema.org/draft-07/schema",
+	"type": "object",
+	"properties": {
+		"mainCredentials": {
+			"$ref": "#/definitions/credentials"
+		},
+		"testnetCredentials": {
+			"$ref": "#/definitions/credentials"
+		},
+		"pairs": {
+			"type": "array",
+			"items": {
+				"type": "string",
+				"$comment": "Pattern is : uppercase characters, followed by underscore, and uppercasecharacter, for example: 'ETH_USDT' and 'BTC_BUSD' are valid",
+				"pattern": "^[A-Z]+_[A-Z]+$"
+			},
+			"minItems": 1
+		}
+	},
+	"required": ["pairs", "mainCredentials"],
+	"definitions": {
+		"credentials": {
+			"type": "object",
+			"properties": {
+				"apiKey": {
+					"type": "string"
+				},
+				"secretKey": {
+					"type": "string"
+				}
+			},
+			"required": ["apiKey", "secretKey"]
+		}
+	}
+}
