@@ -16,9 +16,15 @@
 				"pattern": "^[A-Z]+_[A-Z]+$"
 			},
 			"minItems": 1
+		},
+		"indicators": {
+			"type": "array",
+			"items": {
+				"$ref": "#/definitions/indicator"
+			}
 		}
 	},
-	"required": ["pairs", "mainCredentials"],
+	"required": ["pairs", "mainCredentials", "indicators"],
 	"definitions": {
 		"credentials": {
 			"type": "object",
@@ -31,6 +37,25 @@
 				}
 			},
 			"required": ["apiKey", "secretKey"]
+		},
+		"indicator": {
+			"type": "object",
+			"properties": {
+				"name": {
+					"type": "string"
+				},
+				"plot": {
+					"type": "number",
+					"format": "int32",
+					"minimum": 0,
+					"maximum": 10
+				},
+				"params": {
+					"type": "object",
+					"additionalProperties": true
+				}
+			},
+			"required": ["name", "plot"]
 		}
 	}
 }

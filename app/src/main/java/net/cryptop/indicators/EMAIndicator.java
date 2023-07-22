@@ -36,4 +36,9 @@ public class EMAIndicator implements Indicator {
   public int period() {
     return period;
   }
+
+  @Override
+  public String toString() {
+    return "EMA" + period;
+  }
 }

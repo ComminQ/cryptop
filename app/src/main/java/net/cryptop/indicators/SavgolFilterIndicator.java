@@ -39,4 +39,9 @@ public class SavgolFilterIndicator implements Indicator {
   public int period() {
     return windowSize;
   }
+
+  @Override
+  public String toString() {
+    return "Savgol " + windowSize;
+  }
 }

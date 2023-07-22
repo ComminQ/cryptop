@@ -9,10 +9,14 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import lombok.Getter;
 import lombok.Setter;
+import net.cryptop.indicators.Indicator;
+import net.cryptop.indicators.IndicatorFactory;
 
 @Getter
 public class Config {
@@ -39,6 +43,7 @@ public class Config {
         .excludeFieldsWithModifiers(Modifier.STATIC)
         .registerTypeAdapter(CryptoPair.class, cryptoPairDeserializer())
         .registerTypeAdapter(CryptoPair.class, cryptoPairSerializer())
+        .registerTypeAdapter(Indicator.class, indicatorDeserializer())
         .create();
   }
 
@@ -56,6 +61,29 @@ public class Config {
    */
   public static JsonSerializer<CryptoPair> cryptoPairSerializer() {
     return (src, typeOfSrc, context) -> context.serialize(src.symbolWithDash());
+  }
+
+  /**
+   *
+   * @return Un deserialiseur de {@link Indicator}.
+   */
+  public static JsonDeserializer<Indicator> indicatorDeserializer() {
+    return (json, typeOfT, context) -> {
+      var jsonObj = json.getAsJsonObject();
+      var indicatorName = jsonObj.get("name").getAsString();
+
+      Map<String, String> params = new HashMap<>();
+      if (jsonObj.has("params")) {
+        var indicatorParams = jsonObj.get("params").getAsJsonObject();
+        params = indicatorParams.entrySet().stream().collect(
+            HashMap::new,
+            (m, e)
+                -> m.put(e.getKey(), e.getValue().getAsString()),
+            HashMap::putAll);
+      }
+
+      return IndicatorFactory.createIndicator(indicatorName, params);
+    };
   }
 
   /**
@@ -78,6 +106,8 @@ public class Config {
   public static Config defaultConfig() { return new Config(); }
 
   private List<CryptoPair> pairs = new ArrayList<>();
+
+  private List<Indicator> indicators = new ArrayList<>();
 
   @Setter private BinanceCredentials mainCredentials;
 

@@ -8,11 +8,11 @@ import net.cryptop.data.DataFrame;
  * market.
  *
  */
-public class NoiseGatherer implements Indicator {
+public class NoiseSavgol implements Indicator {
 
   @Override
   public String fieldName() {
-    return "noise_savgol";
+    return "NoiseSavgol";
   }
 
   @Override
@@ -25,5 +25,10 @@ public class NoiseGatherer implements Indicator {
   @Override
   public int period() {
     return 50;
+  }
+
+  @Override
+  public String toString() {
+    return "NoiseSavgol";
   }
 }

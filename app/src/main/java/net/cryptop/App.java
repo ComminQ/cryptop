@@ -5,14 +5,10 @@ package net.cryptop;
 
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
-import java.util.List;
 import java.util.logging.Logger;
 import net.cryptop.config.Config;
 import net.cryptop.data.DataFrame;
 import net.cryptop.indicators.Indicator;
-import net.cryptop.indicators.NoiseGatherer;
-import net.cryptop.indicators.SMAIndicator;
-import net.cryptop.indicators.SavgolFilterIndicator;
 import net.cryptop.utils.IOUtils;
 import net.cryptop.utils.binance.BinanceData;
 import net.cryptop.utils.binance.BinanceData.IntervalEnum;
@@ -88,11 +84,11 @@ public class App {
       // load inital data
       var dataFrame = DataFrame.loadCSV("data/" + pair.symbol() + ".csv");
       logger.info("Applying indicators to " + pair + " ...");
+      for (var indicator : config.getIndicators()) {
+        logger.info("  - " + indicator);
+      }
       // apply indicators
-      Indicator.process(dataFrame,
-                        List.of(new SMAIndicator(50), new SMAIndicator(200),
-                                new SavgolFilterIndicator(50, 3),
-                                new NoiseGatherer()));
+      Indicator.process(dataFrame, config.getIndicators());
       // save data to CSV
       dataFrame.saveToCSV("data/" + pair.symbol() + "_indicators.csv");
     }

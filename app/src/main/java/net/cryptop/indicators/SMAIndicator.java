@@ -34,4 +34,8 @@ public class SMAIndicator implements Indicator {
   public int period() {
     return period;
   }
+  @Override
+  public String toString() {
+    return "SMA" + period;
+  }
 }
