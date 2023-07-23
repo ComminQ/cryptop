@@ -7,6 +7,7 @@ import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.logging.Logger;
 import net.cryptop.config.Config;
+import net.cryptop.data.DataClasses;
 import net.cryptop.data.DataFrame;
 import net.cryptop.indicators.Indicator;
 import net.cryptop.utils.IOUtils;
@@ -65,7 +66,7 @@ public class App {
       }
       logger.info("Downloading data for " + pair + " ...");
       long nowMinusOneYear =
-          LocalDateTime.now().minusYears(2).toEpochSecond(ZoneOffset.UTC) *
+          LocalDateTime.now().minusYears(1).toEpochSecond(ZoneOffset.UTC) *
           1000;
       var historicalData =
           BinanceData
@@ -114,24 +115,35 @@ public class App {
         Wallet initialWallet = new Wallet();
         initialWallet.setBalance(pair.stableCoin(), 50.0);
 
-        var result = strategy.run(initialWallet.clone(), historicalData, dataFrame);
+        var result =
+            strategy.run(initialWallet.clone(), historicalData, dataFrame);
         var finalWallet = result.wallet();
         var trades = result.trades();
         // compare initial and final wallet
-        var initialBalance = initialWallet.getBalance(pair.stableCoin());
-        var finalBalance = finalWallet.getBalance(pair.stableCoin());
-        var profit = finalBalance - initialBalance;
-        logger.info("  - Initial balance: " + initialBalance + " " +
+        // var initialBalance = initialWallet.getBalance(pair.stableCoin());
+        // var finalBalance = finalWallet.getBalance(pair.stableCoin());
+        long firstDate = dataFrame.getLong(DataClasses.DATE_FIELD, 0);
+        long lastDate =
+            dataFrame.getLong(DataClasses.DATE_FIELD, dataFrame.size() - 1);
+        long duration = lastDate - firstDate;
+        logger.info("  - Duration: " + (duration / 1000 / 60 / 60 / 24) + " days");
+
+        var initialWalletValue =
+            initialWallet.getValue(firstDate, historicalData);
+        var finalWalletValue = finalWallet.getValue(lastDate, historicalData);
+
+        var profit = finalWalletValue - initialWalletValue;
+        logger.info("  - Initial balance: " + initialWalletValue + " " +
                     pair.stableCoin());
-        logger.info("  - Final balance: " + finalBalance + " " +
+        logger.info("  - Final balance: " + finalWalletValue + " " +
                     pair.stableCoin());
         String profitStr = profit > 0 ? "+" + profit : "" + profit;
         logger.info("  - Profit: " + profitStr + " " + pair.stableCoin());
         logger.info("  - Trades: " + trades.size());
         // save results
         logger.info("Saving results to CSV ...");
-        String csvFileName = "results/" + pair.symbol() + "_" +
-                             strategy.getName() + ".csv";
+        String csvFileName =
+            "results/" + pair.symbol() + "_" + strategy.getName() + ".csv";
         var resultsDataFrame = result.toDataFrame(historicalData);
         resultsDataFrame.saveToCSV(csvFileName);
       }

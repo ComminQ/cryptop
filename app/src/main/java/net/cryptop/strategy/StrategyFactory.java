@@ -21,6 +21,7 @@ public class StrategyFactory {
     return switch (strategyName) {
       case "HOLD" -> new HoldStrategy();
       case "CUSTOM_NOISE1" -> new CustomNoiseV1Strategy(params.get("noiseField"), Double.parseDouble(params.get("lowThreshold")), Double.parseDouble(params.get("highThreshold")));
+      case "SMA_CROSSING" -> new SmaCrossingStrategy(params.get("shortSma"), params.get("longSma"));
       default -> throw new IllegalStateException("Unexpected value: " + strategyName);
     };
   }

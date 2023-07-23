@@ -103,7 +103,7 @@ public class DataClasses {
    */
   public record HistoricalData(CryptoPair pair, List<Candle> candles, long from,
                                IntervalEnum interval, long to) {
-                                
+
     /**
      * Convert to a DataFrame.
      * @return a DataFrame
@@ -160,11 +160,24 @@ public class DataClasses {
       // most performant way to get the price of a crypto at a given date
       // knowing that the candles are sorted by date
       var candle = candles.stream()
+                       .filter(c -> c.date() <= date)
+                       .reduce((first, second) -> second)
+                       .orElseThrow();
+
+      return candle.close();
+    }
+
+    /**
+     * Get the candle at a given date.
+     *
+     * @param date date in milliseconds
+     * @return candle
+     */
+    public Candle getCandle(long date) {
+      return candles.stream()
           .filter(c -> c.date() <= date)
           .reduce((first, second) -> second)
           .orElseThrow();
-      
-      return candle.close();
     }
   }
 
@@ -178,12 +191,10 @@ public class DataClasses {
    */
   public record Trade(double enter, double exit, long start, long end) {
 
-    public Trade(double enter, long start){
-      this(enter, 0, start, 0);
-    }
+    public Trade(double enter, long start) { this(enter, 0, start, 0); }
 
     /**
-     * 
+     *
      * @return 0 if the trade is open, 1 if the trade is closed
      */
     boolean isOpen() { return end == 0; }

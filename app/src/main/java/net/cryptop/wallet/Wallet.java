@@ -2,6 +2,7 @@ package net.cryptop.wallet;
 
 import java.util.HashMap;
 import java.util.Map;
+import net.cryptop.data.DataClasses.HistoricalData;
 
 public class Wallet implements Cloneable {
 
@@ -32,5 +33,13 @@ public class Wallet implements Cloneable {
     Wallet wallet = new Wallet();
     wallet.balances = new HashMap<>(this.balances);
     return wallet;
+  }
+
+  public double getValue(long date, HistoricalData historicalData) {
+    var cryptoPair = historicalData.pair();
+    var candle = historicalData.getCandle(date);
+    double walletValue = getBalance(cryptoPair.stableCoin()) +
+                         getBalance(cryptoPair.crypto()) * candle.close();
+    return walletValue;
   }
 }

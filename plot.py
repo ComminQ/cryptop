@@ -26,10 +26,15 @@ def get_datas() -> dict[int, list[str]]:
   return res
 
 
-def plot(df: DataFrame, trades: DataFrame):
+def plot(df: DataFrame, trades: DataFrame, strategy: dict):
    
   time = df["date"]
   close = df["close"]
+
+  trade_time = trades["date"]
+  buy = trades["buy"]
+  sell = trades["sell"]
+
   ploting = get_datas()
   coolors = ["blue", "red", "salmon", "orange", "brown", "green", "cyan", "purple", "pink", "magenta", "gray"]
   def pick_color() -> str:
@@ -49,6 +54,8 @@ def plot(df: DataFrame, trades: DataFrame):
   f, plots =  plt.subplots(plot_count, 1, gridspec_kw={'height_ratios': height_ratios}, sharex=True)
 
   plots[0].plot(time, close, linestyle="-", color=pick_color(), label="Prix de clôture")
+  plots[0].plot(trade_time, buy, marker="o", color="green", label="Achat")
+  plots[0].plot(trade_time, sell, marker="x", color="red", label="Vente")
 
   for plot_id, indicators in ploting.items():
     axis : plt.Axes = plots[plot_id]
@@ -69,8 +76,13 @@ def plot(df: DataFrame, trades: DataFrame):
   plots[1].set_title("Tendance - Marché = Bruit")
   plots[1].legend()
 
-  plots[1].axhline(y = 500, color = 'b', linestyle = '-')
-  plots[1].axhline(y = -500, color = 'b', linestyle = '-')
+  if strategy["name"] == "CUSTOM_NOISE1":
+    low_threshold = strategy["params"]["lowThreshold"]
+    high_threshold = strategy["params"]["highThreshold"]
+    plots[1].axhline(y = high_threshold, color = 'b', linestyle = '-')
+    plots[1].axhline(y = low_threshold, color = 'b', linestyle = '-')
+
+
   # set the max y value to be 1000
   plots[1].set_ylim([-1000, 1000])
 
@@ -127,8 +139,10 @@ if __name__ == "__main__":
     print("Quitting ...")
     exit(1) 
 
-  selected_strategy: str = strategies_name[selected_index - 1]
-  result_file = f"{selected_pair.replace('_', '')}_{selected_strategy}.csv"
+  selected_strategy_name: str = strategies_name[selected_index - 1]
+  selected_strategy = config_file["strategies"][selected_index - 1]
+
+  result_file = f"{selected_pair.replace('_', '')}_{selected_strategy_name}.csv"
 
   if result_file not in listdir("results"):
     print(f"No result file found ({result_file})")
@@ -139,4 +153,4 @@ if __name__ == "__main__":
     
 
   # Plot
-  plot(df, df2)
+  plot(df, df2, selected_strategy)

@@ -49,7 +49,7 @@
 			"properties": {
 				"name": {
 					"type": "string",
-					"enum": ["HOLD", "SMA", "MACD", "BBANDS", "CUSTOM_NOISE1"]
+					"enum": ["HOLD", "MACD", "BBANDS", "CUSTOM_NOISE1", "SMA_CROSSING"]
 				},
 				"params": {
 					"type": "object",

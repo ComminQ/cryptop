@@ -33,7 +33,8 @@ public interface Strategy {
       dataFrame.addField("date", dates);
       dataFrame.addField("value", walletValue);
       // list trades
-      var tradeValues = new DoubleArrayList();
+      var buy = new DoubleArrayList();
+      var sells = new DoubleArrayList();
       // for each candle
       for (var candle : base.candles()) {
         // if there is a trade
@@ -46,17 +47,20 @@ public interface Strategy {
         if (trade.isPresent()) {
           // if trade = buy
           if (trade.get().start() == candle.date()) {
-            tradeValues.add(1);
+            // buy
+            buy.add(candle.close());
           } else {
             // else trade = sell
-            tradeValues.add(-1);
+            sells.add(candle.close());
           }
         } else {
           // else add 0
-          tradeValues.add(Double.NaN);
+          buy.add(Double.NaN);
+          sells.add(Double.NaN);
         }
       }
-      dataFrame.addField("trade", tradeValues);
+      dataFrame.addField("buy", buy);
+      dataFrame.addField("sell", sells);
 
       return dataFrame;
     }
