@@ -2,6 +2,8 @@ package net.cryptop.data;
 
 import it.unimi.dsi.fastutil.doubles.DoubleArrayList;
 import it.unimi.dsi.fastutil.doubles.DoubleList;
+import it.unimi.dsi.fastutil.longs.LongArrayList;
+import it.unimi.dsi.fastutil.longs.LongList;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -25,12 +27,45 @@ public class DataFrame {
   /**
    * Map of field name to list of values.
    */
-  private Map<String, DoubleList> data = new HashMap<>();
+  private Map<String, DataList> data = new HashMap<>();
+
+  /**
+   * Map of field name to type.
+   */
+  private Map<String, Class<?>> types = new HashMap<>();
 
   /**
    * List of field names in order.
    */
   private List<String> fieldOrders = new ArrayList<>();
+
+  /**
+   * Get the type of a field.
+   *
+   * @param field field name
+   * @return  the type of the field
+   */
+  public Class<?> getType(String field) { return types.get(field); }
+
+  /**
+   * Set the type of a field.
+   *
+   * @param field field name
+   * @param type type
+   */
+  public void setType(String field, Class<?> type) { types.put(field, type); }
+
+  /**
+   * Check the type of a DataList.
+   *
+   * @param list DataList
+   * @param type type
+   */
+  public void checkType(DataList list, Class<?> type) {
+    if (list.getType() != type) {
+      throw new IllegalArgumentException("Invalid type");
+    }
+  }
 
   /**
    * Add a field.
@@ -48,8 +83,43 @@ public class DataFrame {
    * @param name field name
    * @param values values
    */
+  public void addField(String name, long[] values) {
+    addField(name, new LongArrayList(values));
+  }
+
+  /**
+   * Add a field.
+   *
+   * @param name field name
+   * @param values values
+   */
   public void addField(String name, DoubleList values) {
-    data.put(name, values);
+    types.put(name, double.class);
+    data.put(name, new DataDoubleList(values));
+    fieldOrders.add(name);
+  }
+
+  /**
+   * Add a field.
+   *
+   * @param name field name
+   * @param values values
+   */
+  public void addField(String name, LongList values) {
+    types.put(name, long.class);
+    data.put(name, new DataLongList(values));
+    fieldOrders.add(name);
+  }
+
+  /**
+   * Add a field.
+   *
+   * @param name field name
+   * @param dataList DataList
+   */
+  public void addField(String name, DataList dataList) {
+    types.put(name, dataList.getType());
+    data.put(name, dataList);
     fieldOrders.add(name);
   }
 
@@ -62,10 +132,24 @@ public class DataFrame {
   public void addValue(String name, double value) {
     // if field doesnt exists, create it and add it to fieldOrders
     if (!data.containsKey(name)) {
-      data.put(name, new DoubleArrayList());
+      data.put(name, new DataDoubleList());
       fieldOrders.add(name);
     }
-    data.get(name).add(value);
+    addDouble(name, value);
+  }
+
+  /**
+   * Add a value to a field.
+   *
+   * @param name field name
+   * @param value value
+   */
+  public void addValue(String name, long value) {
+    if (!data.containsKey(name)) {
+      data.put(name, new DataLongList());
+      fieldOrders.add(name);
+    }
+    addLong(name, value);
   }
 
   /**
@@ -103,10 +187,11 @@ public class DataFrame {
    * @param index index
    * @return value
    */
-  public double get(String field, int index) {
+  public double getDouble(String field, int index) {
     if (!data.containsKey(field))
       throw new IllegalArgumentException("Field " + field + " does not exist");
-    return data.get(field).getDouble(index);
+    checkType(data.get(field), double.class);
+    return ((DataDoubleList)data.get(field)).get(index);
   }
 
   /**
@@ -115,10 +200,38 @@ public class DataFrame {
    * @param field field name
    * @return array of values
    */
-  public double[] get(String field) {
+  public double[] getDoubles(String field) {
     if (!data.containsKey(field))
       throw new IllegalArgumentException("Field " + field + " does not exist");
-    return data.get(field).toDoubleArray();
+    checkType(data.get(field), double.class);
+    return ((DataDoubleList)data.get(field)).toArray();
+  }
+
+  /**
+   * Get a field.
+   *
+   * @param field field name
+   * @param index index
+   * @return value
+   */
+  public long getLong(String field, int index) {
+    if (!data.containsKey(field))
+      throw new IllegalArgumentException("Field " + field + " does not exist");
+    checkType(data.get(field), long.class);
+    return ((DataLongList)data.get(field)).get(index);
+  }
+
+  /**
+   * Get the array of values for a field.
+   *
+   * @param field field name
+   * @return array of values
+   */
+  public long[] getLongs(String field) {
+    if (!data.containsKey(field))
+      throw new IllegalArgumentException("Field " + field + " does not exist");
+    checkType(data.get(field), long.class);
+    return ((DataLongList)data.get(field)).toArray();
   }
 
   /**
@@ -128,7 +241,7 @@ public class DataFrame {
    */
   public int size() {
     // return the size of the least populated field
-    return data.values().stream().mapToInt(DoubleList::size).min().orElse(0);
+    return data.values().stream().mapToInt(DataList::size).min().orElse(0);
   }
 
   /**
@@ -137,4 +250,48 @@ public class DataFrame {
    * @param fileName file name
    */
   public void saveToCSV(String fileName) { CSVUtils.writeCSV(this, fileName); }
+
+  /**
+   * Get a field as a string.
+   * Used for CSV output.
+   * 
+   * @param fieldName field name
+   * @param index index
+   * @return value as a string
+   */
+  public String getAsString(String fieldName, int index){
+    if (!data.containsKey(fieldName))
+      throw new IllegalArgumentException("Field " + fieldName + " does not exist");
+    if (data.get(fieldName).getType() == double.class) {
+      var d = getDouble(fieldName, index);
+      if(Double.isNaN(d))
+        return "";
+      return Double.toString(d);
+    } else if (data.get(fieldName).getType() == long.class) {
+      var l = getLong(fieldName, index);
+      if(l == Long.MIN_VALUE)
+        return "";
+      return Long.toString(l);
+    } else {
+      throw new IllegalArgumentException("Invalid type");
+    }
+  }
+
+  private void addLong(String field, long value) {
+    if (!data.containsKey(field)) {
+      data.put(field, new DataLongList());
+      fieldOrders.add(field);
+    }
+    checkType(data.get(field), long.class);
+    ((DataLongList)data.get(field)).add(value);
+  }
+
+  private void addDouble(String field, double value) {
+    if (!data.containsKey(field)) {
+      data.put(field, new DataDoubleList());
+      fieldOrders.add(field);
+    }
+    checkType(data.get(field), double.class);
+    ((DataDoubleList)data.get(field)).add(value);
+  }
 }

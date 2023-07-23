@@ -16,28 +16,43 @@ import net.cryptop.data.DataClasses.HistoricalData;
 public class BinanceData {
 
   public enum IntervalEnum {
-    SECONDS_1("1s"),
-    MINUTES_1("1m"),
-    MINUTES_3("3m"),
-    MINUTES_5("5m"),
-    MINUTES_15("15m"),
-    MINUTES_30("30m"),
-    HOURS_1("1h"),
-    HOURS_2("2h"),
-    HOURS_4("4h"),
-    HOURS_6("6h"),
-    HOURS_8("8h"),
-    HOURS_12("12h"),
-    DAYS_1("1d"),
-    DAYS_3("3d"),
-    WEEK_1("1w"),
-    MONTH_1("1M");
+    SECONDS_1("1s", 1000),
+    MINUTES_1("1m", 60 * 1000),
+    MINUTES_3("3m", 180000),
+    MINUTES_5("5m", 300000),
+    MINUTES_15("15m", 900000),
+    MINUTES_30("30m", 1800000),
+    HOURS_1("1h", 3600000),
+    HOURS_2("2h", 7200000),
+    HOURS_4("4h", 14400000),
+    HOURS_6("6h", 21600000),
+    HOURS_8("8h", 28800000),
+    HOURS_12("12h", 43200000),
+    DAYS_1("1d", 86400000),
+    DAYS_3("3d", 259200000),
+    WEEK_1("1w", 604800000),
+    MONTH_1("1M", 2592000000L);
 
     final String tag;
+    final long milliseconds;
 
-    IntervalEnum(String tag) { this.tag = tag; }
+    IntervalEnum(String tag, long milliseconds) {
+      this.tag = tag;
+      this.milliseconds = milliseconds;
+    }
 
     public String tag() { return tag; }
+
+    public static IntervalEnum fromInterval(long difference) {
+      for (var interval : IntervalEnum.values()) {
+        // check if difference is equal to interval, with a 10% margin
+        if (Math.abs(difference - interval.milliseconds) <
+            interval.milliseconds * 0.1) {
+          return interval;
+        }
+      }
+      return IntervalEnum.HOURS_1;
+    }
   }
 
   /**

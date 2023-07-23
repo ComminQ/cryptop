@@ -17,8 +17,8 @@ public class NoiseSavgol implements Indicator {
 
   @Override
   public double apply(int index, DataFrame dataFrameSubSet) {
-    double[] data = dataFrameSubSet.get("Savgol");
-    return dataFrameSubSet.get(DataClasses.CLOSE_FIELD, data.length - 1) -
+    double[] data = dataFrameSubSet.getDoubles("Savgol");
+    return dataFrameSubSet.getDouble(DataClasses.CLOSE_FIELD, data.length - 1) -
         data[data.length - 1];
   }
 

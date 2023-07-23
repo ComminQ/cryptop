@@ -25,7 +25,7 @@ public class SMAIndicator implements Indicator {
   public double apply(int index, DataFrame dataFrameSubSet) {
     double sum = 0;
     for (int i = 0; i < period; i++) {
-      sum += dataFrameSubSet.get(DataClasses.CLOSE_FIELD, i);
+      sum += dataFrameSubSet.getDouble(DataClasses.CLOSE_FIELD, i);
     }
     return sum / period;
   }

@@ -1,9 +1,11 @@
 package net.cryptop.data;
 
 import com.google.gson.JsonArray;
+import java.util.ArrayList;
 import java.util.List;
 import net.cryptop.config.Config.CryptoPair;
 import net.cryptop.utils.binance.BinanceData.IntervalEnum;
+import net.cryptop.wallet.Wallet;
 
 /**
  * Data classes.
@@ -16,6 +18,32 @@ public class DataClasses {
   public static final String LOW_FIELD = "low";
   public static final String CLOSE_FIELD = "close";
   public static final String VOLUME_FIELD = "volume";
+
+  /**
+   * Create a HistoricalData from a DataFrame.
+   *
+   * @param dataFrame a DataFrame
+   * @param cryptoPair crypto pair
+   *
+   * @return a HistoricalData
+   */
+  public static HistoricalData fromDataFrame(CryptoPair cryptoPair,
+                                             DataFrame dataFrame) {
+
+    List<Candle> candles = new ArrayList<>();
+    for (int i = 0; i < dataFrame.size(); i++) {
+      candles.add(new Candle(
+          dataFrame.getLong(DATE_FIELD, i), dataFrame.getDouble(OPEN_FIELD, i),
+          dataFrame.getDouble(HIGH_FIELD, i), dataFrame.getDouble(LOW_FIELD, i),
+          dataFrame.getDouble(CLOSE_FIELD, i),
+          dataFrame.getDouble(VOLUME_FIELD, i)));
+    }
+
+    var interval = IntervalEnum.fromInterval(
+        (long)(candles.get(1).date() - candles.get(0).date()));
+    return new HistoricalData(cryptoPair, candles, candles.get(0).date(),
+                              interval, candles.get(candles.size() - 1).date());
+  }
 
   private DataClasses() { throw new IllegalStateException("Utility class"); }
 
@@ -60,11 +88,15 @@ public class DataClasses {
   public record HistoricalData(CryptoPair pair, List<Candle> candles, long from,
                                IntervalEnum interval, long to) {
 
+    /**
+     * Convert to a DataFrame.
+     * @return a DataFrame
+     */
     public DataFrame toDataFrame() {
       DataFrame df = new DataFrame();
 
       df.addField(DATE_FIELD,
-                  candles.stream().mapToDouble(Candle::date).toArray());
+                  candles.stream().mapToLong(Candle::date).toArray());
       df.addField(OPEN_FIELD,
                   candles.stream().mapToDouble(Candle::open).toArray());
       df.addField(HIGH_FIELD,
@@ -79,5 +111,73 @@ public class DataClasses {
     }
 
     public int size() { return candles.size(); }
+
+    /**
+     * Get the total value of a wallet at a given date.
+     *
+     * @param wallet wallet
+     * @param date date in milliseconds
+     * @param targetCurrency target currency
+     * @return total value
+     */
+    public double totalValue(Wallet wallet, long date) {
+      return wallet.balances.entrySet()
+          .stream()
+          .mapToDouble(entry -> {
+            var crypto = entry.getKey();
+            var balance = entry.getValue();
+            var price = price(crypto, date);
+            return balance * price;
+          })
+          .sum();
+    }
+
+    /**
+     * Get the price of a crypto at a given date.
+     *
+     * @param crypto crypto
+     * @param date date in milliseconds
+     * @param targetCurrency target currency
+     * @return price
+     */
+    public double price(String crypto, long date) {
+      var candle = candles.stream()
+                       .filter(c -> c.date() <= date)
+                       .reduce((first, second) -> second)
+                       .orElseThrow();
+      return candle.close();
+    }
+  }
+
+  /**
+   * A trade.
+   *
+   * @param enter entry price
+   * @param exit exit price
+   * @param start start time in milliseconds
+   * @param end end time in milliseconds
+   */
+  public record Trade(double enter, double exit, long start, long end) {
+
+    /**
+     * Get the duration of the trade.
+     *
+     * @return duration in milliseconds
+     */
+    long duration() { return end - start; }
+
+    /**
+     * Get the profit percentage of the trade.
+     *
+     * @return profit percentage
+     */
+    double profitPercentage() { return (exit - enter) / enter * 100; }
+
+    /**
+     * Get the profit of the trade.
+     *
+     * @return profit
+     */
+    double profit() { return exit - enter; }
   }
 }

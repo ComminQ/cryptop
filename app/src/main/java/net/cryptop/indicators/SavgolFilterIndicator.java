@@ -30,7 +30,7 @@ public class SavgolFilterIndicator implements Indicator {
 
   @Override
   public double apply(int index, DataFrame dataFrameSubSet) {
-    double[] data = dataFrameSubSet.get(DataClasses.CLOSE_FIELD);
+    double[] data = dataFrameSubSet.getDoubles(DataClasses.CLOSE_FIELD);
     double[] smoothed = savgol.filter(data, "mirror");
     return smoothed[smoothed.length - 1];
   }

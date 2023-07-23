@@ -14,7 +14,7 @@ def get_datas() -> dict[int, list[str]]:
       indicator_name = indicator["name"]
       params = indicator.get("params", {})
 
-      if indicator_name == "EMA" or indicator_name == "SMA":
+      if indicator_name == "EMA" or indicator_name == "SMA" or indicator_name == "RSI":
         indicator_name = indicator_name + str(params.get("period", 50))
 
       plot_id = indicator["plot"]
@@ -30,38 +30,45 @@ def plot(df: DataFrame):
   time = df["date"]
   close = df["close"]
   ploting = get_datas()
-  coolors = ["c-", "r-", "b-", "y-", "g-", "m-", "k-"]
+  coolors = ["blue", "red", "salmon", "orange", "brown", "green", "cyan", "purple", "pink", "magenta", "gray"]
   def pick_color() -> str:
     return coolors.pop(0)
+  
+  plot_count = len(ploting)
+  # generate height ratio for plot count
+  # eg : 2 plots => height_ratios = [3, 1]
+  # eg : 3 plots => height_ratios = [3, 1, 1]
+  # etc...
+  height_ratios = [3] + [1] * (plot_count - 1) 
 
 
   # Plot
-  f, (a1, a2) =  plt.subplots(2, 1, gridspec_kw={'height_ratios': [3, 1]}, sharex=True)
+  f, plots =  plt.subplots(plot_count, 1, gridspec_kw={'height_ratios': height_ratios}, sharex=True)
 
-  a1.plot(time, close, pick_color(), label="Prix de clôture")
+  plots[0].plot(time, close, linestyle="-", color=pick_color(), label="Prix de clôture")
 
   for plot_id, indicators in ploting.items():
-    axis : plt.Axes = a1 if plot_id == 0 else a2
+    axis : plt.Axes = plots[plot_id]
     for indicator in indicators:
       if indicator in df:
-        axis.plot(time, df[indicator], pick_color(), label=indicator)
+        axis.plot(time, df[indicator], linestyle="-", color=pick_color(), label=indicator)
 
-  a2.set_xlabel("Date")
-  a2.set_ylabel("Bruit")
-  a2.set_title("Tendance - Marché = Bruit")
-  a2.legend()
+  plots[1].set_xlabel("Date")
+  plots[1].set_ylabel("Bruit")
+  plots[1].set_title("Tendance - Marché = Bruit")
+  plots[1].legend()
 
-  a2.axhline(y = 500, color = 'b', linestyle = '-')
-  a2.axhline(y = -500, color = 'b', linestyle = '-')
+  plots[1].axhline(y = 500, color = 'b', linestyle = '-')
+  plots[1].axhline(y = -500, color = 'b', linestyle = '-')
   # set the max y value to be 1000
-  a2.set_ylim([-1000, 1000])
+  plots[1].set_ylim([-1000, 1000])
 
   # plt.axhline(y = 0.5, color = 'r', linestyle = '-')
 
-  a1.set_xlabel("Date")
-  a1.set_ylabel("Prix")
-  a1.set_title("Prix de clôture")
-  a1.legend()
+  plots[0].set_xlabel("Date")
+  plots[0].set_ylabel("Prix")
+  plots[0].set_title("Prix de clôture")
+  plots[0].legend()
 
   f.show()
   plt.show()

@@ -23,6 +23,7 @@ public final class IndicatorFactory {
       case "EMA" -> new EMAIndicator(Integer.parseInt(params.get("period")));
       case "Savgol" -> new SavgolFilterIndicator(Integer.parseInt(params.get("period")), Integer.parseInt(params.get("polynomial")));
       case "NoiseSavgol" -> new NoiseSavgol();
+      case "RSI" -> new RSIIndicator(Integer.parseInt(params.get("period")));
       default -> throw new IllegalStateException("Unexpected value: " + name);
     };
   }

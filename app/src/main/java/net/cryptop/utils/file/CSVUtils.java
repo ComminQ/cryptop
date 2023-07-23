@@ -1,6 +1,7 @@
 package net.cryptop.utils.file;
 
 import it.unimi.dsi.fastutil.doubles.DoubleArrayList;
+import it.unimi.dsi.fastutil.longs.LongArrayList;
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.FileWriter;
@@ -25,7 +26,14 @@ public class CSVUtils {
         // first line is the header
         var header = bufferedReader.readLine().split(COMMA_DELIMITER);
         for (String field : header) {
-          dataFrame.addField(field, new DoubleArrayList());
+          // if field like time or date or datetime, set type to long
+          String lowerCaseField = field.toLowerCase();
+          if (lowerCaseField.contains("time") ||
+              lowerCaseField.contains("date")) {
+            dataFrame.addField(field, new LongArrayList());
+          } else {
+            dataFrame.addField(field, new DoubleArrayList());
+          }
         }
         int fieldCount = header.length;
 
@@ -36,9 +44,17 @@ public class CSVUtils {
           for (int i = 0; i < fieldCount; i++) {
             if (i >= values.length)
               break; // ignore empty values
-            Double value =
-                values[i].isEmpty() ? Double.NaN : Double.parseDouble(values[i]);
-            dataFrame.addValue(header[i], value);
+            Class<?> type = dataFrame.getType(header[i]);
+            if (type == long.class) {
+              long value = values[i].isEmpty() ? Long.MIN_VALUE
+                                               : Long.parseLong(values[i]);
+              dataFrame.addValue(header[i], value);
+            } else if (type == double.class) {
+              double value = values[i].isEmpty()
+                                 ? Double.NaN
+                                 : Double.parseDouble(values[i]);
+              dataFrame.addValue(header[i], value);
+            }
           }
         }
 
@@ -63,12 +79,7 @@ public class CSVUtils {
         fileWriter.append(NEW_LINE_SEPARATOR);
         for (int i = 0; i < dataFrame.size(); i++) {
           for (String field : dataFrame.getFieldOrders()) {
-            Double d = dataFrame.get(field, i);
-            if (Double.isNaN(d)) {
-              fileWriter.append("");
-            } else {
-              fileWriter.append(String.valueOf(d));
-            }
+            fileWriter.append(dataFrame.getAsString(field, i));
             fileWriter.append(COMMA_DELIMITER);
           }
           fileWriter.append(NEW_LINE_SEPARATOR);

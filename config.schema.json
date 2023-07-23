@@ -38,6 +38,10 @@
 			},
 			"required": ["apiKey", "secretKey"]
 		},
+		"strategy": {
+			"type": "string",
+			"enum": ["HOLD", "SMA", "MACD", "BBANDS", ""]
+		},
 		"indicator": {
 			"type": "object",
 			"properties": {

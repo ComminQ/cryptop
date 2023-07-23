@@ -27,8 +27,8 @@ public class EMAIndicator implements Indicator {
   @Override
   public double apply(int index, DataFrame dataFrameSubSet) {
     int size = dataFrameSubSet.size();
-    var close = dataFrameSubSet.get(DataClasses.CLOSE_FIELD, size - 1);
-    var ema = dataFrameSubSet.get(fieldName(), size - 2);
+    var close = dataFrameSubSet.getDouble(DataClasses.CLOSE_FIELD, size - 1);
+    var ema = dataFrameSubSet.getDouble(fieldName(), size - 2);
     return (close - ema) * this.multiplier + ema;
   }
 
