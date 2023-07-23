@@ -2,6 +2,7 @@ import json
 from os import listdir
 from pandas import DataFrame, read_csv
 from matplotlib import pyplot as plt
+from util import read_config_file
 
 def get_datas() -> dict[int, list[str]]:
   res = {}
@@ -25,7 +26,7 @@ def get_datas() -> dict[int, list[str]]:
   return res
 
 
-def plot(df: DataFrame):
+def plot(df: DataFrame, trades: DataFrame):
    
   time = df["date"]
   close = df["close"]
@@ -35,6 +36,8 @@ def plot(df: DataFrame):
     return coolors.pop(0)
   
   plot_count = len(ploting)
+  # register wallet plot
+  plot_count += 1
   # generate height ratio for plot count
   # eg : 2 plots => height_ratios = [3, 1]
   # eg : 3 plots => height_ratios = [3, 1, 1]
@@ -52,6 +55,14 @@ def plot(df: DataFrame):
     for indicator in indicators:
       if indicator in df:
         axis.plot(time, df[indicator], linestyle="-", color=pick_color(), label=indicator)
+  
+  # Last plot = wallet
+  wallet_ax : plt.Axes = plots[-1]
+  wallet_ax.plot(trades["date"], trades["value"], linestyle="-", color=pick_color(), label="Wallet")
+  wallet_ax.set_title("Wallet")
+  wallet_ax.set_xlabel("Date")
+  wallet_ax.set_ylabel("Valeur")
+  wallet_ax.legend()
 
   plots[1].set_xlabel("Date")
   plots[1].set_ylabel("Bruit")
@@ -78,23 +89,54 @@ def plot(df: DataFrame):
 
 if __name__ == "__main__":
   print("Plotting...")
+  config_file = read_config_file()
+  if config_file is None:
+    print("No config file found")
+    exit(1)
 
-  # List files
-  files = listdir("data")
-  # Ask user for file to plot
-  print("Files:")
-  for i in range(len(files)):
-    print(f"{(i+1)}: {files[i]}")
-
-  # Get file
-  input_str = input("Select file to plot:")
+  pairs = config_file["pairs"]
+  # Ask user for pair
+  print("Pairs:")
+  for i in range(len(pairs)):
+    print(f"{(i+1)}: {pairs[i]}")
+  
+  # Get pair
+  input_str = input("Select pair to plot:")
   selected_index = int(input_str)
-  if selected_index > len(files) or selected_index < 1:
+  if selected_index > len(pairs) or selected_index < 1:
     print("Quitting ...")
     exit(1)
-  file = files[selected_index-1]
+
+  selected_pair: str = pairs[selected_index - 1]
+  pair_with_indicators = f"{selected_pair.replace('_', '')}_indicators.csv"
   # Open file
-  df = read_csv(f"data/{file}")
+  df = read_csv(f"data/{pair_with_indicators}")
+
+  # Load all strategies
+  strategies_name: list[str] = [x["name"] for x in config_file.get("strategies", [])]
+
+  # Ask user for strategy
+  print("Strategies:")
+  for i in range(len(strategies_name)):
+    print(f"{(i+1)}: {strategies_name[i]}")
+  
+  # Get strategy
+  input_str = input("Select strategy to plot:")
+  selected_index = int(input_str)
+  if selected_index > len(strategies_name) or selected_index < 1:
+    print("Quitting ...")
+    exit(1) 
+
+  selected_strategy: str = strategies_name[selected_index - 1]
+  result_file = f"{selected_pair.replace('_', '')}_{selected_strategy}.csv"
+
+  if result_file not in listdir("results"):
+    print(f"No result file found ({result_file})")
+    exit(1)
+
+  # Open file
+  df2 = read_csv(f"results/{result_file}")
+    
 
   # Plot
-  plot(df)
+  plot(df, df2)

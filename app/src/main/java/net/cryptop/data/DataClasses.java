@@ -3,6 +3,7 @@ package net.cryptop.data;
 import com.google.gson.JsonArray;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import net.cryptop.config.Config.CryptoPair;
 import net.cryptop.utils.binance.BinanceData.IntervalEnum;
 import net.cryptop.wallet.Wallet;
@@ -19,6 +20,22 @@ public class DataClasses {
   public static final String CLOSE_FIELD = "close";
   public static final String VOLUME_FIELD = "volume";
 
+  public Set<String> STABLE_COINS = Set.of("USDT", "BUSD", "USDC", "TUSD");
+  public Set<String> CRYPTO_CURRENCIES = Set.of(
+      "BTC", "ETH", "BNB", "XRP", "BCH", "LTC", "EOS", "XLM", "TRX", "ADA",
+      "XMR", "DASH", "ETC", "NEO", "ZEC", "QTUM", "ZRX", "LINK", "BAT", "IOTA",
+      "IOST", "NANO", "ONT", "VET", "THETA", "REN", "RVN", "ALGO", "ZIL", "KNC",
+      "ATOM", "TFUEL", "ONE", "FTM", "ENJ", "TOMO", "BAND", "WAVES", "MATIC",
+      "ERD", "DOGE", "PERL", "DUSK", "ANKR", "WIN", "COS", "COCOS", "TROY",
+      "BTT", "NPXS", "CHZ", "USDS", "ONG", "HOT", "VITE", "FTT", "EUR", "GBP",
+      "TRY", "RUB", "UAH", "NGN", "USDSB", "USDS", "VAI", "BKRW", "IDRT",
+      "BIDR", "BVND", "SUSD", "DAI", "AUD", "JPY", "CHR", "STPT", "BTCB",
+      "ETHB", "XRPB", "BNBB", "BCHB", "LTCB", "LINKB", "XTZB", "ADA", "XMR",
+      "DASH", "ETC", "NEO", "ZEC", "QTUM", "ZRX", "LINK", "BAT", "IOTA", "IOST",
+      "NANO", "ONT", "VET", "THETA", "REN", "RVN", "ALGO", "ZIL", "KNC", "ATOM",
+      "TFUEL", "ONE", "FTM", "ENJ", "TOMO", "BAND", "WAVES", "MATIC", "ERD",
+      "DOGE", "PERL", "DUSK", "ANKR", "WIN", "COS", "COCOS", "TROY");
+
   /**
    * Create a HistoricalData from a DataFrame.
    *
@@ -29,7 +46,6 @@ public class DataClasses {
    */
   public static HistoricalData fromDataFrame(CryptoPair cryptoPair,
                                              DataFrame dataFrame) {
-
     List<Candle> candles = new ArrayList<>();
     for (int i = 0; i < dataFrame.size(); i++) {
       candles.add(new Candle(
@@ -87,7 +103,7 @@ public class DataClasses {
    */
   public record HistoricalData(CryptoPair pair, List<Candle> candles, long from,
                                IntervalEnum interval, long to) {
-
+                                
     /**
      * Convert to a DataFrame.
      * @return a DataFrame
@@ -141,10 +157,13 @@ public class DataClasses {
      * @return price
      */
     public double price(String crypto, long date) {
+      // most performant way to get the price of a crypto at a given date
+      // knowing that the candles are sorted by date
       var candle = candles.stream()
-                       .filter(c -> c.date() <= date)
-                       .reduce((first, second) -> second)
-                       .orElseThrow();
+          .filter(c -> c.date() <= date)
+          .reduce((first, second) -> second)
+          .orElseThrow();
+      
       return candle.close();
     }
   }
@@ -158,6 +177,16 @@ public class DataClasses {
    * @param end end time in milliseconds
    */
   public record Trade(double enter, double exit, long start, long end) {
+
+    public Trade(double enter, long start){
+      this(enter, 0, start, 0);
+    }
+
+    /**
+     * 
+     * @return 0 if the trade is open, 1 if the trade is closed
+     */
+    boolean isOpen() { return end == 0; }
 
     /**
      * Get the duration of the trade.

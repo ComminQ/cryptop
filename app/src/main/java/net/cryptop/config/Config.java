@@ -17,6 +17,8 @@ import lombok.Getter;
 import lombok.Setter;
 import net.cryptop.indicators.Indicator;
 import net.cryptop.indicators.IndicatorFactory;
+import net.cryptop.strategy.Strategy;
+import net.cryptop.strategy.StrategyFactory;
 
 @Getter
 public class Config {
@@ -29,6 +31,10 @@ public class Config {
     public String symbol() { return base + quote; }
 
     public String symbolWithDash() { return base + "_" + quote; }
+
+    public String crypto() { return base; }
+
+    public String stableCoin() { return quote; }
   }
 
   public record BinanceCredentials(String apiKey, String secretKey) {}
@@ -44,6 +50,7 @@ public class Config {
         .registerTypeAdapter(CryptoPair.class, cryptoPairDeserializer())
         .registerTypeAdapter(CryptoPair.class, cryptoPairSerializer())
         .registerTypeAdapter(Indicator.class, indicatorDeserializer())
+        .registerTypeAdapter(Strategy.class, strategyDeserializer())
         .create();
   }
 
@@ -86,6 +93,25 @@ public class Config {
     };
   }
 
+  public static JsonDeserializer<Strategy> strategyDeserializer() {
+    return (json, typeOfT, context) -> {
+      var jsonObj = json.getAsJsonObject();
+      var strategyName = jsonObj.get("name").getAsString();
+
+      Map<String, String> params = new HashMap<>();
+      if (jsonObj.has("params")) {
+        var strategyParams = jsonObj.get("params").getAsJsonObject();
+        params = strategyParams.entrySet().stream().collect(
+            HashMap::new,
+            (m, e)
+                -> m.put(e.getKey(), e.getValue().getAsString()),
+            HashMap::putAll);
+      }
+
+      return StrategyFactory.createStrategy(strategyName, params);
+    };
+  }
+
   /**
    *
    * @return La configuration de l'application, ou {@link Optional#empty()} si
@@ -108,6 +134,8 @@ public class Config {
   private List<CryptoPair> pairs = new ArrayList<>();
 
   private List<Indicator> indicators = new ArrayList<>();
+
+  private List<Strategy> strategies = new ArrayList<>();
 
   @Setter private BinanceCredentials mainCredentials;
 

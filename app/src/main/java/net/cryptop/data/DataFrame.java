@@ -9,6 +9,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import lombok.Getter;
+import net.cryptop.config.Config.CryptoPair;
+import net.cryptop.data.DataClasses.HistoricalData;
 import net.cryptop.utils.file.CSVUtils;
 
 @Getter
@@ -254,22 +256,23 @@ public class DataFrame {
   /**
    * Get a field as a string.
    * Used for CSV output.
-   * 
+   *
    * @param fieldName field name
    * @param index index
    * @return value as a string
    */
-  public String getAsString(String fieldName, int index){
+  public String getAsString(String fieldName, int index) {
     if (!data.containsKey(fieldName))
-      throw new IllegalArgumentException("Field " + fieldName + " does not exist");
+      throw new IllegalArgumentException("Field " + fieldName +
+                                         " does not exist");
     if (data.get(fieldName).getType() == double.class) {
       var d = getDouble(fieldName, index);
-      if(Double.isNaN(d))
+      if (Double.isNaN(d))
         return "";
       return Double.toString(d);
     } else if (data.get(fieldName).getType() == long.class) {
       var l = getLong(fieldName, index);
-      if(l == Long.MIN_VALUE)
+      if (l == Long.MIN_VALUE)
         return "";
       return Long.toString(l);
     } else {
@@ -293,5 +296,9 @@ public class DataFrame {
     }
     checkType(data.get(field), double.class);
     ((DataDoubleList)data.get(field)).add(value);
+  }
+
+  public HistoricalData toHistoricalData(CryptoPair pair) {
+    return DataClasses.fromDataFrame(pair, this);
   }
 }

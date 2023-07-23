@@ -12,6 +12,7 @@ import net.cryptop.indicators.Indicator;
 import net.cryptop.utils.IOUtils;
 import net.cryptop.utils.binance.BinanceData;
 import net.cryptop.utils.binance.BinanceData.IntervalEnum;
+import net.cryptop.wallet.Wallet;
 
 public class App {
 
@@ -91,6 +92,49 @@ public class App {
       Indicator.process(dataFrame, config.getIndicators());
       // save data to CSV
       dataFrame.saveToCSV("data/" + pair.symbol() + "_indicators.csv");
+    }
+
+    logger.info("Starting backtesting ...");
+
+    for (var pair : pairs) {
+      // load data
+      var dataFrame =
+          DataFrame.loadCSV("data/" + pair.symbol() + "_indicators.csv");
+      var historicalData = dataFrame.toHistoricalData(pair);
+      // backtest
+      logger.info("Testing strategies on " + pair + " (50 " +
+                  pair.stableCoin() + ")...");
+      for (var strategy : config.getStrategies()) {
+        logger.info("  - " + strategy.getName());
+      }
+
+      for (var strategy : config.getStrategies()) {
+        logger.info("Testing " + strategy.getName() + " on " + pair + " ...");
+        // run strategy
+        Wallet initialWallet = new Wallet();
+        initialWallet.setBalance(pair.stableCoin(), 50.0);
+
+        var result = strategy.run(initialWallet.clone(), historicalData, dataFrame);
+        var finalWallet = result.wallet();
+        var trades = result.trades();
+        // compare initial and final wallet
+        var initialBalance = initialWallet.getBalance(pair.stableCoin());
+        var finalBalance = finalWallet.getBalance(pair.stableCoin());
+        var profit = finalBalance - initialBalance;
+        logger.info("  - Initial balance: " + initialBalance + " " +
+                    pair.stableCoin());
+        logger.info("  - Final balance: " + finalBalance + " " +
+                    pair.stableCoin());
+        String profitStr = profit > 0 ? "+" + profit : "" + profit;
+        logger.info("  - Profit: " + profitStr + " " + pair.stableCoin());
+        logger.info("  - Trades: " + trades.size());
+        // save results
+        logger.info("Saving results to CSV ...");
+        String csvFileName = "results/" + pair.symbol() + "_" +
+                             strategy.getName() + ".csv";
+        var resultsDataFrame = result.toDataFrame(historicalData);
+        resultsDataFrame.saveToCSV(csvFileName);
+      }
     }
   }
 }

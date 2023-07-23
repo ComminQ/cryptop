@@ -33,6 +33,13 @@ dependencies {
 
     // Signal Processing 
     implementation("com.github.psambit9791:jdsp:2.0.1")
+
+    // Tests
+    testImplementation("org.junit.jupiter:junit-jupiter-api:5.8.1")
+    testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.8.1")
+    // lombok 
+    testAnnotationProcessor("org.projectlombok:lombok:1.18.28")
+    
 }
 
 testing {
@@ -42,6 +49,16 @@ testing {
             // Use JUnit Jupiter test framework
             useJUnitJupiter("5.8.1")
         }
+    }
+}
+
+tasks.named<Test>("test") {
+    useJUnitPlatform()
+
+    maxHeapSize = "1G"
+
+    testLogging {
+        events("passed")
     }
 }
 

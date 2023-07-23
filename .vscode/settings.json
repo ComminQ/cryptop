@@ -9,5 +9,6 @@
 		"**/.DS_Store": true,
 		"**/Thumbs.db": true,
 		"app/bin": true
-	}
+	},
+	"java.debug.settings.onBuildFailureProceed": true
 }

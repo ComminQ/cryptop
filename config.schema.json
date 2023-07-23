@@ -8,6 +8,12 @@
 		"testnetCredentials": {
 			"$ref": "#/definitions/credentials"
 		},
+		"strategies": {
+			"type": "array",
+			"items": {
+				"$ref": "#/definitions/strategy"
+			}
+		},
 		"pairs": {
 			"type": "array",
 			"items": {
@@ -24,7 +30,7 @@
 			}
 		}
 	},
-	"required": ["pairs", "mainCredentials", "indicators"],
+	"required": ["pairs", "mainCredentials", "indicators", "strategies"],
 	"definitions": {
 		"credentials": {
 			"type": "object",
@@ -39,8 +45,17 @@
 			"required": ["apiKey", "secretKey"]
 		},
 		"strategy": {
-			"type": "string",
-			"enum": ["HOLD", "SMA", "MACD", "BBANDS", ""]
+			"type": "object",
+			"properties": {
+				"name": {
+					"type": "string",
+					"enum": ["HOLD", "SMA", "MACD", "BBANDS", "CUSTOM_NOISE1"]
+				},
+				"params": {
+					"type": "object",
+					"additionalProperties": true
+				}
+			}
 		},
 		"indicator": {
 			"type": "object",

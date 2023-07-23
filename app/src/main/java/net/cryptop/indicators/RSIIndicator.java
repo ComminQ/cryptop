@@ -45,4 +45,9 @@ public class RSIIndicator implements Indicator {
   public int period() {
     return period;
   }
+
+  @Override
+  public String toString() {
+    return "RSI" + period;
+  }
 }
