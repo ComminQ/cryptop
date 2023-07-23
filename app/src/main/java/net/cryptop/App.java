@@ -3,29 +3,31 @@
  */
 package net.cryptop;
 
-import java.time.LocalDateTime;
-import java.time.ZoneOffset;
+import java.text.DecimalFormat;
 import java.util.logging.Logger;
+
 import net.cryptop.config.Config;
 import net.cryptop.data.DataClasses;
 import net.cryptop.data.DataFrame;
 import net.cryptop.indicators.Indicator;
 import net.cryptop.utils.IOUtils;
 import net.cryptop.utils.binance.BinanceData;
-import net.cryptop.utils.binance.BinanceData.IntervalEnum;
 import net.cryptop.wallet.Wallet;
 
 public class App {
 
+  private static final DecimalFormat df = new DecimalFormat("#.##");
   private static final Logger logger;
 
   static {
     System.setProperty("java.util.logging.SimpleFormatter.format",
-                       "[%1$tF %1$tT] [%4$-7s] %5$s %n");
+        "[%1$tF %1$tT] [%4$-7s] %5$s %n");
     logger = Logger.getLogger(App.class.getName());
   }
 
-  public static Logger getLogger() { return logger; }
+  public static Logger getLogger() {
+    return logger;
+  }
 
   public static void main(String[] args) {
     System.out.println("===== Starting App =====");
@@ -47,6 +49,11 @@ public class App {
     });
 
     logger.info("Config loaded: " + config);
+    if (config.getTimeSettings().startDate() == 0L) {
+      System.out.println("Error in config.json: startDate is not set. "
+          + "Please edit config.json and set startDate to a valid timestamp (in milliseconds).");
+      System.exit(1);
+    }
 
     var pairs = config.getPairs();
     logger.info("Loaded " + pairs.size() + " pairs:");
@@ -58,20 +65,17 @@ public class App {
       if (hasBeenDownloaded) {
         // ask user if they want to download again
         System.out.print("Data for " + pair + " has already been downloaded. "
-                         + "Do you want to download again? (y/n) ");
+            + "Do you want to download again? (y/n) ");
         String answer = IOUtils.readStdIn();
         if (!answer.equals("y")) {
           continue;
         }
       }
       logger.info("Downloading data for " + pair + " ...");
-      long nowMinusOneYear =
-          LocalDateTime.now().minusYears(1).toEpochSecond(ZoneOffset.UTC) *
-          1000;
-      var historicalData =
-          BinanceData
-              .getHistoricalData(pair, nowMinusOneYear, IntervalEnum.DAYS_1)
-              .join();
+      long from = config.getTimeSettings().startDate();
+      var historicalData = BinanceData
+          .getHistoricalData(pair, from, config.getTimeSettings().interval())
+          .join();
       logger.info("Downloaded " + historicalData.size() + " candles.");
 
       logger.info("Saving data to CSV ...");
@@ -99,51 +103,54 @@ public class App {
 
     for (var pair : pairs) {
       // load data
-      var dataFrame =
-          DataFrame.loadCSV("data/" + pair.symbol() + "_indicators.csv");
-      var historicalData = dataFrame.toHistoricalData(pair);
+      var dataFrame = DataFrame.loadCSV("data/" + pair.symbol() + "_indicators.csv");
       // backtest
       logger.info("Testing strategies on " + pair + " (50 " +
-                  pair.stableCoin() + ")...");
+          pair.stableCoin() + ")...");
       for (var strategy : config.getStrategies()) {
         logger.info("  - " + strategy.getName());
       }
 
       for (var strategy : config.getStrategies()) {
+        dataFrame.freezeFinanceFields();
+        var historicalData = dataFrame.toHistoricalData(pair);
         logger.info("Testing " + strategy.getName() + " on " + pair + " ...");
         // run strategy
         Wallet initialWallet = new Wallet();
         initialWallet.setBalance(pair.stableCoin(), 50.0);
 
-        var result =
-            strategy.run(initialWallet.clone(), historicalData, dataFrame);
+        var result = strategy.run(initialWallet.clone(), historicalData, dataFrame);
         var finalWallet = result.wallet();
         var trades = result.trades();
         // compare initial and final wallet
         // var initialBalance = initialWallet.getBalance(pair.stableCoin());
         // var finalBalance = finalWallet.getBalance(pair.stableCoin());
         long firstDate = dataFrame.getLong(DataClasses.DATE_FIELD, 0);
-        long lastDate =
-            dataFrame.getLong(DataClasses.DATE_FIELD, dataFrame.size() - 1);
+        long lastDate = dataFrame.getLong(DataClasses.DATE_FIELD, dataFrame.size() - 1);
         long duration = lastDate - firstDate;
-        logger.info("  - Duration: " + (duration / 1000 / 60 / 60 / 24) + " days");
+        logger.info("  - Duration: " + (duration / 1000 / 60 / 60 / 24) + " days, with interval " +
+            config.getTimeSettings().interval().tag() + " (" + duration + " ms)");
 
-        var initialWalletValue =
-            initialWallet.getValue(firstDate, historicalData);
+        var initialWalletValue = initialWallet.getValue(firstDate, historicalData);
         var finalWalletValue = finalWallet.getValue(lastDate, historicalData);
 
         var profit = finalWalletValue - initialWalletValue;
+        double profitPercent = profit / initialWalletValue * 100;
+        var periodOfTimeInDays = duration / 1000 / 60 / 60 / 24;
+        double profitPerYear = profitPercent / periodOfTimeInDays * 365;
+
         logger.info("  - Initial balance: " + initialWalletValue + " " +
-                    pair.stableCoin());
+            pair.stableCoin());
         logger.info("  - Final balance: " + finalWalletValue + " " +
-                    pair.stableCoin());
+            pair.stableCoin());
         String profitStr = profit > 0 ? "+" + profit : "" + profit;
         logger.info("  - Profit: " + profitStr + " " + pair.stableCoin());
+        logger.info(
+            "  - Profit (%): " + df.format(profitPercent) + "%, averaging " + df.format(profitPerYear) + "% per year");
         logger.info("  - Trades: " + trades.size());
         // save results
         logger.info("Saving results to CSV ...");
-        String csvFileName =
-            "results/" + pair.symbol() + "_" + strategy.getName() + ".csv";
+        String csvFileName = "results/" + pair.symbol() + "_" + strategy.getName() + ".csv";
         var resultsDataFrame = result.toDataFrame(historicalData);
         resultsDataFrame.saveToCSV(csvFileName);
       }

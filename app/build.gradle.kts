@@ -10,6 +10,7 @@
 plugins {
     // Apply the application plugin to add support for building a CLI application in Java.
     application
+    // kotlin("jvm").version("1.5.31")
 }
 
 repositories {
@@ -18,6 +19,8 @@ repositories {
 }
 
 dependencies {
+    // implementation(kotlin("stdlib-jdk8"))
+
     // This dependency is used by the application.
     implementation("com.google.guava:guava:30.1.1-jre")
 
@@ -58,7 +61,8 @@ tasks.named<Test>("test") {
     maxHeapSize = "1G"
 
     testLogging {
-        events("passed")
+        events("passed", "skipped", "failed")
+        setExceptionFormat("full")
     }
 }
 

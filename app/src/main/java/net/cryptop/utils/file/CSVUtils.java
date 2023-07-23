@@ -40,7 +40,7 @@ public class CSVUtils {
         // other lines are the data
         String line;
         while ((line = bufferedReader.readLine()) != null) {
-          var values = line.split(COMMA_DELIMITER);
+          var values = line.split(COMMA_DELIMITER, -1);
           for (int i = 0; i < fieldCount; i++) {
             if (i >= values.length)
               break; // ignore empty values

@@ -81,10 +81,10 @@ def plot(df: DataFrame, trades: DataFrame, strategy: dict):
     high_threshold = strategy["params"]["highThreshold"]
     plots[1].axhline(y = high_threshold, color = 'b', linestyle = '-')
     plots[1].axhline(y = low_threshold, color = 'b', linestyle = '-')
+    # set the max y value to be 1000
+    plots[1].set_ylim([low_threshold*1.1, high_threshold*1.1])
 
 
-  # set the max y value to be 1000
-  plots[1].set_ylim([-1000, 1000])
 
   # plt.axhline(y = 0.5, color = 'r', linestyle = '-')
 

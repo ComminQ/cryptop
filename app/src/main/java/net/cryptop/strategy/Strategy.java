@@ -1,9 +1,12 @@
 package net.cryptop.strategy;
 
+import java.util.List;
+
 import it.unimi.dsi.fastutil.doubles.DoubleArrayList;
 import it.unimi.dsi.fastutil.doubles.DoubleList;
+import it.unimi.dsi.fastutil.longs.Long2ObjectMap;
+import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.longs.LongList;
-import java.util.List;
 import net.cryptop.data.DataClasses.HistoricalData;
 import net.cryptop.data.DataClasses.Trade;
 import net.cryptop.data.DataFrame;
@@ -18,12 +21,13 @@ public interface Strategy {
    * A strategy result.
    * Contains the final wallet and the list of trades.
    * Used to display the result of the strategy.
-   * @param wallet final wallet
-   * @param trades list of trades
+   * 
+   * @param wallet      final wallet
+   * @param trades      list of trades
    * @param walletValue wallet value over time
    */
   record StrategyResult(Wallet wallet, List<Trade> trades,
-                        DoubleList walletValue) {
+      DoubleList walletValue) {
 
     public DataFrame toDataFrame(HistoricalData base) {
       var dataFrame = new DataFrame();
@@ -36,26 +40,29 @@ public interface Strategy {
       var buy = new DoubleArrayList();
       var sells = new DoubleArrayList();
       // for each candle
+      Long2ObjectMap<Trade> tradesBuyMap = trades.stream()
+          .collect(Long2ObjectOpenHashMap::new,
+              (map, trade) -> map.put(trade.start(), trade),
+              Long2ObjectOpenHashMap::putAll);
+
+      Long2ObjectMap<Trade> tradesSellMap = trades.stream()
+          .collect(Long2ObjectOpenHashMap::new,
+              (map, trade) -> map.put(trade.end(), trade),
+              Long2ObjectOpenHashMap::putAll);
+
       for (var candle : base.candles()) {
         // if there is a trade
-        var trade =
-            trades.stream()
-                .filter(
-                    t -> t.start() == candle.date() || t.end() == candle.date())
-                .findFirst();
-
-        if (trade.isPresent()) {
-          // if trade = buy
-          if (trade.get().start() == candle.date()) {
-            // buy
-            buy.add(candle.close());
-          } else {
-            // else trade = sell
-            sells.add(candle.close());
-          }
+        var trade = tradesBuyMap.get(candle.date());
+        if (trade != null) {
+          buy.add(candle.close());
         } else {
-          // else add 0
           buy.add(Double.NaN);
+        }
+
+        trade = tradesSellMap.get(candle.date());
+        if (trade != null) {
+          sells.add(candle.close());
+        } else {
           sells.add(Double.NaN);
         }
       }
@@ -76,10 +83,10 @@ public interface Strategy {
   /**
    * Process of the strategy.
    *
-   * @param currentWallet current wallet
+   * @param currentWallet  current wallet
    * @param historicalData historical data
-   * @param dataFrame data frame
+   * @param dataFrame      data frame
    */
   StrategyResult run(Wallet startingWallet, HistoricalData historicalData,
-                     DataFrame dataFrame);
+      DataFrame dataFrame);
 }

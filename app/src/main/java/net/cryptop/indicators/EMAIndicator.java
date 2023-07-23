@@ -29,6 +29,10 @@ public class EMAIndicator implements Indicator {
     int size = dataFrameSubSet.size();
     var close = dataFrameSubSet.getDouble(DataClasses.CLOSE_FIELD, size - 1);
     var ema = dataFrameSubSet.getDouble(fieldName(), size - 2);
+    if (Double.isNaN(ema)){
+      // return sma if ema is not available
+      return new SMAIndicator(period).apply(index, dataFrameSubSet);
+    }
     return (close - ema) * this.multiplier + ema;
   }
 
