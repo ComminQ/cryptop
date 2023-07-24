@@ -15,7 +15,7 @@ import net.cryptop.wallet.Wallet;
 /**
  * A strategy.
  */
-public interface Strategy {
+public abstract class Strategy {
 
   /**
    * A strategy result.
@@ -26,7 +26,7 @@ public interface Strategy {
    * @param trades      list of trades
    * @param walletValue wallet value over time
    */
-  record StrategyResult(Wallet wallet, List<Trade> trades,
+  public record StrategyResult(Wallet wallet, List<Trade> trades,
       DoubleList walletValue) {
 
     public DataFrame toDataFrame(HistoricalData base) {
@@ -78,7 +78,7 @@ public interface Strategy {
    *
    * @return the name of the strategy
    */
-  String getName();
+  public abstract String getName();
 
   /**
    * Process of the strategy.
@@ -87,6 +87,6 @@ public interface Strategy {
    * @param historicalData historical data
    * @param dataFrame      data frame
    */
-  StrategyResult run(Wallet startingWallet, HistoricalData historicalData,
+  public abstract StrategyResult run(Wallet startingWallet, HistoricalData historicalData,
       DataFrame dataFrame);
 }

@@ -26,6 +26,26 @@ public class EmaCrossingRSIConfirmationStrategy extends BuySellSignalsStrategy {
         this.rsiHighThreshold = rsiHighThreshold;
     }
 
+    public int getShortEma() {
+        return Integer.parseInt(shortEma.replace("EMA", ""));
+    }
+
+    public int getLongEma() {
+        return Integer.parseInt(longEma.replace("EMA", ""));
+    }
+
+    public int getRsiPeriod() {
+        return Integer.parseInt(rsiPeriod.replace("RSI", ""));
+    }
+
+    public double getRsiLowThreshold() {
+        return rsiLowThreshold;
+    }
+
+    public double getRsiHighThreshold() {
+        return rsiHighThreshold;
+    }
+
     @Override
     public String getName() {
         return "EMA_CROSSING_RSI_CONFIRMATION";

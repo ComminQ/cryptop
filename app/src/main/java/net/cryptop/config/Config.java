@@ -116,14 +116,24 @@ public class Config {
       var jsonObj = json.getAsJsonObject();
       var interval = jsonObj.get("interval").getAsString();
       // Format: YYYY-MM-DD
-      String startDate = jsonObj.get("startTime").getAsString();
-      long startDateLong = 0;
-      try {
-        startDateLong = DATE_TIME_FORMATTER.parse(startDate).getTime();
-      } catch (Exception e) {
-        e.printStackTrace();
+      if (jsonObj.has("startTime")) {
+        String startDate = jsonObj.get("startTime").getAsString();
+        long startDateLong = 0;
+        try {
+          startDateLong = DATE_TIME_FORMATTER.parse(startDate).getTime();
+        } catch (Exception e) {
+          e.printStackTrace();
+        }
+        return new TimeSettings(IntervalEnum.findByTag(interval), startDateLong);
+      } else if (jsonObj.has("unitCount")) {
+        int unitCount = jsonObj.get("unitCount").getAsInt();
+        var timeInterval = IntervalEnum.findByTag(interval);
+        long startDate = System.currentTimeMillis() - unitCount * timeInterval.getMilliseconds();
+
+        return new TimeSettings(timeInterval, startDate);
+      } else {
+        return new TimeSettings(IntervalEnum.findByTag(interval), 0);
       }
-      return new TimeSettings(IntervalEnum.findByTag(interval), startDateLong);
     };
   }
 

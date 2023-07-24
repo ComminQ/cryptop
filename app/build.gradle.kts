@@ -21,6 +21,12 @@ repositories {
 dependencies {
     // implementation(kotlin("stdlib-jdk8"))
 
+    // apache cli
+    implementation("commons-cli:commons-cli:1.5.0")
+
+    // TA4J
+    implementation("org.ta4j:ta4j-core:0.15")
+
     // This dependency is used by the application.
     implementation("com.google.guava:guava:30.1.1-jre")
 

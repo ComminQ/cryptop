@@ -12,6 +12,14 @@ public class SmaCrossingStrategy extends BuySellSignalsStrategy {
     this.longSma = longSma;
   }
 
+  public int getShortSmaPeriod(){
+    return Integer.parseInt(shortSma.replace("SMA", ""));
+  }
+
+  public int getLongSmaPeriod(){
+    return Integer.parseInt(longSma.replace("SMA", ""));
+  }
+
   @Override
   public String getName() {
     return "SMA_CROSSING";

@@ -8,11 +8,11 @@ import net.cryptop.data.DataClasses.Trade;
 import net.cryptop.data.DataFrame;
 import net.cryptop.wallet.Wallet;
 
-public abstract class BuySellSignalsStrategy implements Strategy {
+public abstract class BuySellSignalsStrategy extends Strategy {
 
-  public abstract boolean buySignal(DataFrame dataFrame, double currentCrypto, long currenDtate, double currentStableCoin, int index);
+  public abstract boolean buySignal(DataFrame dataFrame, double currentCrypto, long currenDate, double currentStableCoin, int index);
 
-  public abstract boolean sellSignal(DataFrame dataFrame, double currentCrypto, long currenDtate, double currentStableCoin, int index);
+  public abstract boolean sellSignal(DataFrame dataFrame, double currentCrypto, long currenDate, double currentStableCoin, int index);
 
   @Override
   public StrategyResult run(Wallet startingWallet,

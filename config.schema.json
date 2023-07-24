@@ -6,6 +6,7 @@
       "type": "object",
       "properties": {
         "interval": {
+          "description": "Interval of the candles to retrieve",
           "type": "string",
           "enum": [
             "1s",
@@ -27,10 +28,30 @@
           ]
         },
         "startTime": {
+          "description": "Start time of the interval to retrieve",
           "type": "string",
           "format": "date"
+        },
+        "unitCount": {
+          "description": "Number of intervals to retrieve starting from now",
+          "type": "number",
+          "format": "int32",
+          "minimum": 1,
+          "maximum": 5000
         }
-      }
+      },
+      "oneOf": [
+        {
+          "required": [
+            "interval", "startTime"
+          ]
+        },
+        {
+          "required": [
+            "interval", "unitCount"
+          ]
+        }
+      ]
     },
     "mainCredentials": {
       "$ref": "#/definitions/credentials"

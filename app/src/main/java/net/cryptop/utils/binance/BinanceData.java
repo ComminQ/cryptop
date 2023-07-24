@@ -13,6 +13,7 @@ import com.google.gson.JsonElement;
 
 import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
 import it.unimi.dsi.fastutil.longs.LongSet;
+import lombok.Getter;
 import net.cryptop.App;
 import net.cryptop.config.Config.CryptoPair;
 import net.cryptop.data.DataClasses.Candle;
@@ -20,6 +21,7 @@ import net.cryptop.data.DataClasses.HistoricalData;
 
 public class BinanceData {
 
+  @Getter
   public enum IntervalEnum {
     SECONDS_1("1s", 1000),
     MINUTES_1("1m", 60 * 1000),
