@@ -10,3 +10,7 @@ config.json
 
 # Ignore python env
 .venv/
+
+# NVIM
+workspace/
+.settings/
